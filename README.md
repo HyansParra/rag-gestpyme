@@ -20,4 +20,4 @@ Este sistema permite la ingesta, procesamiento y consulta semántica de document
 1. Clonar el repositorio.
 2. Crear un entorno virtual: `python -m venv venv`
 3. Activar el entorno: `.\venv\Scripts\activate`
-4. Instalar las dependencias: pip install -r requirements.txt
+4. Instalar las dependencias: `pip install -r requirements.txt`
