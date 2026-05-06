@@ -1,0 +1,7 @@
+requests
+pymupdf
+python-docx
+pandas
+streamlit
+langchain
+supabase
