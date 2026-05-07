@@ -1,51 +1,44 @@
-import streamlit as st # Importamos Streamlit para la interfaz web
-from ingesta_universal import obtener_texto_universal # Importamos nuestro módulo de extracción universal
-from modulo_chunking import dividir_texto  # Importamos nuestro nuevo módulo
+import streamlit as st # Interfaz de usuario
+from ingesta_universal import obtener_texto_universal # Función para descargar y extraer texto de documentos
+from modulo_chunking import dividir_texto # Función para dividir texto en fragmentos (chunks)
 
-# Configuración de la página
-st.set_page_config(page_title="Gestpyme - RAG")
+# Configuración inicial de la página
+st.set_page_config(page_title="Gestpyme - Asistente RAG", layout="centered")
 
-st.title("Sistema de Ingesta y Procesamiento RAG")
-st.markdown("""
-Esta avance representa las Fases 1 y 2 del sistema RAG:
-- Fase 1: Ingesta y Extracción: Descarga documentos (PDF, Word, Excel) desde una URL, extrae la información y la segmenta en fragmentos lógicos (Chunking) para la IA.
-- Fase 2: Chunking: Aplica técnicas de segmentación utilizando LangChain para dividir el texto extraído en fragmentos manejables (chunks) que mantengan el contexto necesario para la IA. 
-""")
+st.title("Asistente de Documentación Inteligente")
+st.markdown("Ingrese el enlace de un documento para procesarlo o realice consultas sobre la información ya almacenada.")
 
-# Input de la URL
-url_input = st.text_input("Pega aquí la URL del documento:")
+# Inicializar historial de chat si no existe
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-if st.button("Procesar Documento"):
-    if url_input:
-        # FASE 1: EXTRACCIÓN
-        with st.spinner("Fase 1: Descargando y extrayendo texto..."):
-            texto = obtener_texto_universal(url_input)
-            
-            if texto:
-                st.success("Documento extraído con éxito")
-                
-                # FASE 2: CHUNKING
-                with st.spinner("Fase 2: Aplicando segmentación (Chunking) con LangChain..."):
+# Mostrar historial de mensajes
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# Barra de entrada de chat para el usuario
+if prompt := st.chat_input("Pegue un enlace o realice una pregunta..."):
+    
+    # Agregar mensaje del usuario al historial
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    # Lógica de respuesta
+    with st.chat_message("assistant"):
+        # Detectar si el input es una URL
+        if prompt.startswith("http"):
+            with st.spinner("Procesando documento..."):
+                texto = obtener_texto_universal(prompt)
+                if texto:
                     chunks = dividir_texto(texto)
-                
-                # Mostramos métricas de ambas fases 
-                col1, col2, col3 = st.columns(3)
-                col1.metric("Caracteres Totales", len(texto))
-                col2.metric("Fragmentos Generados", len(chunks))
-                col3.metric("Estado", "Listo para Vectorizar")
-                
-                st.divider()
-                
-                # Vista previa de los Chunks generados
-                st.subheader("Vista previa de los Fragmentos (Chunks)")
-                st.write("Así es como la Inteligencia Artificial leerá el documento:")
-                
-                # Un componente desplegable para no saturar la pantalla
-                with st.expander("Ver los primeros 3 fragmentos generados"):
-                    for i, chunk in enumerate(chunks[:3]):
-                        st.markdown(f"**Fragmento {i+1}** *(Largo: {len(chunk)} caracteres)*")
-                        st.info(chunk)
-            else:
-                st.error("No se pudo procesar el archivo. Revisa que la URL sea válida.")
-    else:
-        st.warning("Por favor, ingresa una URL.")
+                    respuesta = f"Documento procesado correctamente. Se han generado {len(chunks)} fragmentos y están listos para ser almacenados en la base de datos."
+                else:
+                    respuesta = "No se pudo extraer información del enlace proporcionado. Verifique que el archivo sea un PDF, Word o Excel válido."
+        else:
+            # Lógica de chat futura
+            respuesta = "Funcionalidad de chat aún no implementada. Por ahora, solo se pueden procesar documentos a través de enlaces."
+        
+        st.markdown(respuesta)
+        st.session_state.messages.append({"role": "assistant", "content": respuesta})

@@ -8,14 +8,14 @@ def dividir_texto(texto, tamano_chunk=1000, superposicion=200):
     """
     try:
         text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=tamano_chunk,
-            chunk_overlap=superposicion,
-            length_function=len,
+            chunk_size=tamano_chunk, # Tamaño máximo de cada fragmento en caracteres
+            chunk_overlap=superposicion, # Cantidad de caracteres que se superponen entre fragmentos para mantener contexto
+            length_function=len, # Función para medir la longitud del texto (en este caso, caracteres)
             # Intenta cortar primero por párrafos, luego por saltos de línea, luego por espacios
             separators=["\n\n", "\n", " ", ""] 
         )
         
-        chunks = text_splitter.split_text(texto)
+        chunks = text_splitter.split_text(texto) # Divide el texto en fragmentos utilizando la configuración definida
         return chunks
         
     except Exception as e:

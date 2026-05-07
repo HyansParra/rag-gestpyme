@@ -6,3 +6,6 @@ streamlit
 langchain
 supabase
 openpyxl
+langchain-text-splitters
+python-dotenv
+google-generativeai
