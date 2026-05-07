@@ -1,44 +1,58 @@
-import streamlit as st # Interfaz de usuario
-from ingesta_universal import obtener_texto_universal # Función para descargar y extraer texto de documentos
-from modulo_chunking import dividir_texto # Función para dividir texto en fragmentos (chunks)
+import streamlit as st # libreria para crear interfaces web interactivas con Python
+from ingesta_universal import obtener_texto_universal # funcion para extraer texto de diversas fuentes
+from modulo_chunking import dividir_texto # funcion para segmentar texto en fragmentos manejables
+from modulo_ia import generar_embedding # funcion para convertir texto en vectores usando Gemini
+from modulo_vectorial import guardar_fragmentos # funcion para almacenar fragmentos y vectores en Supabase
 
-# Configuración inicial de la página
+# Configuracion de la interfaz
 st.set_page_config(page_title="Gestpyme - Asistente RAG", layout="centered")
 
-st.title("Asistente de Documentación Inteligente")
-st.markdown("Ingrese el enlace de un documento para procesarlo o realice consultas sobre la información ya almacenada.")
+st.title("Asistente de Documentacion Inteligente")
+st.markdown("Ingrese el enlace de un documento para su procesamiento vectorial o realice consultas sobre la informacion almacenada.")
 
-# Inicializar historial de chat si no existe
+# Gestion del estado del chat
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Mostrar historial de mensajes
+# Despliegue del historial de interaccion
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Barra de entrada de chat para el usuario
-if prompt := st.chat_input("Pegue un enlace o realice una pregunta..."):
+# Captura de entrada del usuario
+if prompt := st.chat_input("Ingrese una URL de documento o su consulta..."):
     
-    # Agregar mensaje del usuario al historial
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Lógica de respuesta
     with st.chat_message("assistant"):
-        # Detectar si el input es una URL
+        # Logica de procesamiento para entradas de tipo URL
         if prompt.startswith("http"):
-            with st.spinner("Procesando documento..."):
+            with st.spinner("Ejecutando ciclo de ingesta, fragmentacion y vectorizacion..."):
+                # Fase 1: Extraccion de contenido
                 texto = obtener_texto_universal(prompt)
+                
                 if texto:
+                    # Fase 2: Segmentacion de texto (Chunking)
                     chunks = dividir_texto(texto)
-                    respuesta = f"Documento procesado correctamente. Se han generado {len(chunks)} fragmentos y están listos para ser almacenados en la base de datos."
+                    
+                    # Fase 3: Generacion de representaciones vectoriales (Embeddings)
+                    embeddings = [generar_embedding(c) for c in chunks]
+                    
+                    # Fase 4: Persistencia en base de datos vectorial (Supabase)
+                    exito = guardar_fragmentos(chunks, embeddings, prompt)
+                    
+                    if exito:
+                        respuesta = f"Procesamiento finalizado. Se han generado y almacenado {len(chunks)} fragmentos vectorizados en la base de datos."
+                    else:
+                        respuesta = "Error en la fase de persistencia. Los datos no pudieron ser almacenados en Supabase."
                 else:
-                    respuesta = "No se pudo extraer información del enlace proporcionado. Verifique que el archivo sea un PDF, Word o Excel válido."
+                    respuesta = "Error en la fase de ingesta. No se pudo extraer informacion del enlace proporcionado."
+        
+        # Logica para consultas de lenguaje natural sobre los datos almacenados con IA
         else:
-            # Lógica de chat futura
-            respuesta = "Funcionalidad de chat aún no implementada. Por ahora, solo se pueden procesar documentos a través de enlaces."
+            respuesta = "Consultas sobre datos no implementadas actualmente"
         
         st.markdown(respuesta)
         st.session_state.messages.append({"role": "assistant", "content": respuesta})
