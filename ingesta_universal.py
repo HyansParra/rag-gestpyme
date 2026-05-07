@@ -63,7 +63,7 @@ def obtener_texto_universal(url):
 # --- Bloque de ejecución para pruebas ---
 if __name__ == "__main__":
     # Insertar URL de prueba (puede ser PDF, DOCX o XLSX)
-    url_prueba = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
+    url_prueba = "https://calibre-ebook.com/downloads/demos/demo.docx"
     resultado = obtener_texto_universal(url_prueba)
     
     if resultado:
