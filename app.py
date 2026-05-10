@@ -3,6 +3,7 @@ from ingesta_universal import obtener_texto_universal # funcion para extraer tex
 from modulo_chunking import dividir_texto # funcion para segmentar texto en fragmentos manejables
 from modulo_ia import generar_embedding, generar_respuesta # funciones para generar vectores de texto y respuestas inteligentes usando Gemini
 from modulo_vectorial import guardar_fragmentos, buscar_similitud # funciones para interactuar con la base de datos vectorial (Supabase)
+from modulo_analisis import analizar_excel_directo # funcion para analizar directamente archivos Excel con Gemini
 
 # Configuracion de la interfaz
 st.set_page_config(page_title="Gestpyme - Asistente RAG", layout="centered")
@@ -27,8 +28,26 @@ if prompt := st.chat_input("Ingrese una URL de documento o su consulta..."):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        # Logica de procesamiento para entradas de tipo URL
-        if prompt.startswith("http"):
+        
+        # Modo analisis de datos estructurados (Pandas + Gemini)
+        if prompt.lower().startswith("analizar"):
+            with st.spinner("Modo Analista: Leyendo documento estructurado y calculando..."):
+                # Se espera un formato como: "Analizar http://link_al_excel.xlsx ¿Cuál es el total?"
+                partes = prompt.split(" ", 2) 
+                if len(partes) >= 3:
+                    comando = partes[0]
+                    url = partes[1]
+                    pregunta_matematica = partes[2]
+                    
+                    respuesta = analizar_excel_directo(url, pregunta_matematica)
+                else:
+                    respuesta = "Por favor usa el formato exacto: Analizar [URL_DEL_EXCEL] [Tu pregunta matemática]"
+            
+            st.markdown(respuesta)
+            st.session_state.messages.append({"role": "assistant", "content": respuesta})
+
+        # Logica de procesamiento para entradas de tipo URL (Base de datos vectorial)
+        elif prompt.startswith("http"):
             with st.spinner("Ejecutando ciclo de ingesta, fragmentacion y vectorizacion..."):
                 texto = obtener_texto_universal(prompt)
                 
@@ -47,7 +66,7 @@ if prompt := st.chat_input("Ingrese una URL de documento o su consulta..."):
             st.markdown(respuesta)
             st.session_state.messages.append({"role": "assistant", "content": respuesta})
             
-        # LÓGICA DEL CHATBOT - FASE DE CONSULTA
+        # LÓGICA DEL CHATBOT - FASE DE CONSULTA (Respuestas basadas en texto)
         else:
             with st.spinner("Buscando en la base de datos y analizando contexto..."):
                 # 1. Convertir la pregunta en un vector
