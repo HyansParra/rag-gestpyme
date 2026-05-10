@@ -40,3 +40,24 @@ def guardar_fragmentos(chunks, embeddings, url_origen):
     except Exception as e:
         print(f"Error al guardar en Supabase: {e}")
         return False
+
+def buscar_similitud(query_embedding, limite=3):
+    """
+    Llama a la función de Supabase para buscar los fragmentos más similares a la pregunta.
+    """
+    try:
+        supabase = obtener_cliente_supabase()
+        
+        # supabase.rpc llama a la función SQL 'buscar_documentos' que crea una consulta para encontrar los embeddings más cercanos a query_embedding
+        respuesta = supabase.rpc(
+            'buscar_documentos',
+            {
+                'query_embedding': query_embedding, 
+                'limite_resultados': limite
+            }
+        ).execute()
+        
+        return respuesta.data
+    except Exception as e:
+        print(f"Error al buscar similitud en Supabase: {e}")
+        return []
