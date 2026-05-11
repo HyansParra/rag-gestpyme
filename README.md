@@ -27,6 +27,12 @@ Este sistema permite la ingesta, procesamiento vectorial y consulta semántica d
    SUPABASE_KEY="tu_anon_key_aqui"
    GEMINI_API_KEY="tu_api_key_de_google_aqui"
 
+## Ejecución de la Aplicación
+Una vez configurado el entorno y las variables, levanta la interfaz web ejecutando el siguiente comando en tu terminal:
+```bash
+streamlit run app.py
+```
+
 ## Instrucciones de Uso
 El asistente opera en dos modalidades directamente desde la barra de chat:
 
